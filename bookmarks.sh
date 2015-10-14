@@ -5,39 +5,50 @@ BMCFG_TMP="$HOME/.bmcfg_tmp"
 
 touch "$BMCFG"
 
-function _validate_label
-{
-    if [ -z "$1" ]; then echo "Label name should be set for this command!" && return 1; fi;
-    if [ -n "${1//[^:]}" ]; then echo "Label name '$1' can not have ':' in it!" && return 1; fi;
+_refresh_dir_exports() {
+    IFS=''
+    while read line; do
+      KEY="$(awk -F ':' '{ print $1 }' <<< $line)"
+      VALUE="$(awk -F ':' '{ print $2 }' <<< $line)"
+      export DIR_"$KEY"="$VALUE"
+    done <$BMCFG
 }
 
-function save
-{
+_validate_label() {
+    if [ -z "$1" ]; then
+        echo "Label name should be set for this command!" 1>&2
+        return 1
+    fi
+    if [ -n "${1//[^:]}" ]; then
+        echo "Label name '$1' can not have ':' in it!" 1>&2
+        return 1
+    fi
+}
+
+save() {
     _validate_label "$1" || return 1
     delete "$1" && echo "$1:$(pwd)" >> "$BMCFG"
+    export DIR_"$1"="$(pwd)"
 }
 
-function go
-{
+go() {
     _validate_label "$1" || return 1
     LABEL_PATH=$(awk -F ':' "{ if (\$1 == \"$1\") printf \$2 }" "$BMCFG")
     [ -n "$LABEL_PATH" ] && cd "$LABEL_PATH"
 }
 
-function print
-{
+print() {
     _validate_label "$1" || return 1
     awk -F ':' "{ if (\$1 == \"$1\") printf \"\033[1;34m\" \$2 \"\033[0m\n\" }" "$BMCFG"
 }
 
-function delete
-{
+delete() {
     _validate_label "$1" || return 1
     awk -F ':' "{ if (\$1 != \"$1\") print }" "$BMCFG" > "$BMCFG_TMP" && mv "$BMCFG_TMP" "$BMCFG"
+    unset DIR_"$1"
 }
 
-function list
-{
+list() {
     awk -F ':' "{ printf \"\033[1;32m\" \$1 \"\033[0m -> \033[1;34m\" \$2 \"\033[0m\n\" }" "$BMCFG"
 }
 
@@ -46,3 +57,5 @@ alias g=go
 alias p=print
 alias d=delete
 alias l=list
+
+_refresh_dir_exports

@@ -6,7 +6,7 @@ BMCFG_TMP="$HOME/.bmcfg_tmp"
 touch "$BMCFG"
 
 _refresh_dir_exports() {
-    IFS=''
+    local IFS=''
     while read line; do
       KEY="$(awk -F ':' '{ print $1 }' <<< $line)"
       VALUE="$(awk -F ':' '{ print $2 }' <<< $line)"
@@ -51,6 +51,18 @@ delete() {
 list() {
     awk -F ':' "{ printf \"\033[1;32m\" \$1 \"\033[0m -> \033[1;34m\" \$2 \"\033[0m\n\" }" "$BMCFG"
 }
+
+## COMPLETION FUNCTIONS ##
+
+_complete_label_name() {
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    local labels=$(awk -F ':' '{ printf "\"" $1 "\" " }' "$BMCFG")
+    COMPREPLY=( $(compgen -W "$labels" -- "$cur") )
+}
+
+complete -F _complete_label_name go print delete g p d
+
+## ALIASES FOR MAIN FUNCTIONS ##
 
 alias s=save
 alias g=go

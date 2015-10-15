@@ -6,12 +6,11 @@ BMCFG_TMP="$HOME/.bmcfg_tmp"
 touch "$BMCFG"
 
 _refresh_dir_exports() {
-    local IFS=''
-    while read line; do
-      KEY="$(awk -F ':' '{ print $1 }' <<< $line)"
-      VALUE="$(awk -F ':' '{ print $2 }' <<< $line)"
+    while read -r line; do
+      KEY="$(awk -F ':' '{ print $1 }' <<< "$line")"
+      VALUE="$(awk -F ':' '{ print $2 }' <<< "$line")"
       export DIR_"$KEY"="$VALUE"
-    done <$BMCFG
+    done < "$BMCFG"
 }
 
 _validate_label() {
@@ -33,8 +32,9 @@ save() {
 
 go() {
     _validate_label "$1" || return 1
-    LABEL_PATH=$(awk -F ':' "{ if (\$1 == \"$1\") printf \$2 }" "$BMCFG")
-    [ -n "$LABEL_PATH" ] && cd "$LABEL_PATH"
+    local label_path
+    label_path=$(awk -F ':' "{ if (\$1 == \"$1\") printf \$2 }" "$BMCFG")
+    [ -n "$label_path" ] && cd "$label_path" || return 1
 }
 
 print() {
@@ -56,11 +56,12 @@ list() {
 
 _complete_label_name() {
     local cur=${COMP_WORDS[COMP_CWORD]}
-    local labels=$(awk -F ':' '{ printf "\"" $1 "\" " }' "$BMCFG")
+    local labels
+    labels=$(awk -F ':' '{ printf "\"" $1 "\" " }' "$BMCFG")
     COMPREPLY=( $(compgen -W "$labels" -- "$cur") )
 }
 
-complete -F _complete_label_name go print delete g p d
+complete -F _complete_label_name go print delete list g p d l
 
 ## ALIASES FOR MAIN FUNCTIONS ##
 

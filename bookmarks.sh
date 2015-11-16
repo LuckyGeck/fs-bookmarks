@@ -26,25 +26,25 @@ _validate_label() {
 
 save() {
     _validate_label "$1" || return 1
-    delete "$1" && echo "$1:$(pwd)" >> "$BMCFG"
-    export DIR_"$1"="$(pwd)"
+    delete "$1" && echo "$1:$PWD" >> "$BMCFG"
+    export DIR_"$1"="$PWD"
 }
 
 go() {
     _validate_label "$1" || return 1
     local label_path
-    label_path=$(awk -F ':' "{ if (\$1 == \"$1\") printf \$2 }" "$BMCFG")
+    label_path=$(awk -F ':' "(\$1 == \"$1\") { print \$2 }" "$BMCFG")
     [ -n "$label_path" ] && cd "$label_path" || return 1
 }
 
 print() {
     _validate_label "$1" || return 1
-    awk -F ':' "{ if (\$1 == \"$1\") printf \"\033[1;34m\" \$2 \"\033[0m\n\" }" "$BMCFG"
+    awk -F ':' "(\$1 == \"$1\") { printf \"\033[1;34m\" \$2 \"\033[0m\n\" }" "$BMCFG"
 }
 
 delete() {
     _validate_label "$1" || return 1
-    awk -F ':' "{ if (\$1 != \"$1\") print }" "$BMCFG" > "$BMCFG_TMP" && mv "$BMCFG_TMP" "$BMCFG"
+    awk -F ':' "(\$1 != \"$1\")" "$BMCFG" > "$BMCFG_TMP" && mv "$BMCFG_TMP" "$BMCFG"
     unset DIR_"$1"
 }
 
